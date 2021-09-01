@@ -9,21 +9,50 @@
 #include <string>
 #include <stdio.h>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 enum Tokenkind {
     Eof = -1, Plus = 0, Minus, Times, Div, Eq, Exp, Gr, Less, Greq, Lesseq, Eqeq, Noteq,
-    Number, Ident, String, Pleq, Mieq, Tieq, Diveq, Expeq, Plpl, Mimi, If, Loop
+    Number, Ident, String, Pleq, Mieq, Tieq, Diveq, Expeq, Plpl, Mimi, If, Loop, Declint,
+    Declstring, Semi, LPar, RPar
 };
+
+struct keyWord {
+    string word;
+    Tokenkind tk;
+};
+
+vector<keyWord> KeyWdT = {
+    {"if", If}, {"loop", Loop}, {"int", Declint}, {"string", Declstring}
+};
+
+bool isNum(char c) {
+    if(48<=c && c<58) {
+        return true;
+    }
+    return false;
+}
+
+bool isLetter(char c) {
+    if(('a'<=c && c<='z') || ('A'<=c && c<='Z')) {
+        return true;
+    }
+    return false;
+}
 
 class Token {
 private:
     Tokenkind tk;
-    string tokentext;
+    string tokentext = "";
+    int tokenvalue = 0;
 public:
     void init(Tokenkind nowtk, string nowtokentext) {
         tk = nowtk;
         tokentext = nowtokentext;
+    }
+    void setValue(int nowtokenvalue) {
+        tokenvalue = nowtokenvalue;
     }
     string showtext() {
         return tokentext;
@@ -43,6 +72,7 @@ public:
         source = filestr + "\n";
         curChar = source[0];
     }
+    
     void nextChar() {
         curPos++;
         if(curPos>=source.size()) {
@@ -52,25 +82,27 @@ public:
             curChar = source[curPos];
         }
     }
+    
     char peek() {
         if(curPos+1>=source.size()) return '\0';
         return source[curPos+1];
     }
+    
     void abort(string errorMessage) {
         cout<<"Lexing Error. "<<errorMessage<<'\n';
         throw(1);
     }
+    
     void skipSpace() {
         while(curChar==' ' || curChar=='\t' || curChar=='\n' || curChar=='\r') {
             nextChar();
-            if(curPos==source.size()-1) break;
         }
     }
     
     Token GetToken() {
         Token token;
         skipSpace();
-        if(curChar=='#') {
+        while(curChar=='#') {
             nextChar();
             while(curChar!='#') {
                 nextChar();
@@ -180,6 +212,42 @@ public:
             }
             token.init(String, result);
         }
+        else if(curChar==';') {
+            token.init(Semi, string(1, curChar));
+        }
+        else if(curChar=='(') {
+            token.init(LPar, string(1, curChar));
+        }
+        else if(curChar==')') {
+            token.init(RPar, string(1, curChar));
+        }
+        else if(isNum(curChar)) {
+            string result = string(1, curChar);
+            int nowvalue = (int)curChar-48;
+            while(isNum(peek())) {
+                nextChar();
+                result+=curChar;
+                nowvalue = nowvalue*10+(int)curChar-48;
+            }
+            token.init(Number, result);
+            token.setValue(nowvalue);
+        }
+        else if(isLetter(curChar)) {
+            string name = string(1, curChar);
+            while(isLetter(peek()) || isNum(peek())) {
+                nextChar();
+                name += curChar;
+            }
+            for(int i = 0; i<KeyWdT.size(); i++) {
+                if(name==KeyWdT[i].word) {
+                    token.init(KeyWdT[i].tk, KeyWdT[i].word);
+                    break;
+                }
+                if(i==KeyWdT.size()-1) {
+                    token.init(Ident, name);
+                }
+            }
+        }
         else if(curChar=='\0') {
             token.init(Eof, string(1, curChar));
         }
@@ -189,6 +257,14 @@ public:
         nextChar();
         return token;
     }
+    
+    Token checkGet(Token t, Tokenkind k) {
+        if(t.showtk()==k) {
+            return GetToken();
+        }
+        cout<<"Parsing Error. In correct token for "+t.showtext();
+        return t;
+    }
 };
 
 
@@ -196,7 +272,7 @@ public:
 
 
 int main() {
-    string input = "\"\nHello, World!\"+=+";
+    string input = "int a = 0; if(a>5) a++; #4#";
     Lexer lexer;
     lexer.setsource(input);
     Token tok;
@@ -207,7 +283,7 @@ int main() {
         return 0;
     }
     while(1) {
-        cout<<tok.showtext()<<'\n';
+        cout<<tok.showtk()<<" "<<tok.showtext()<<'\n';
         try{
             tok = lexer.GetToken();
         }
