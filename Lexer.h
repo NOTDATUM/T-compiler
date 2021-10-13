@@ -15,7 +15,7 @@ using namespace std;
 enum Tokenkind {
     Eof = -1, Plus = 0, Minus, Times, Div, Eq, Exp, Gr, Less, Greq, Lesseq, Eqeq, Noteq,
     Number, Ident, String, Pleq, Mieq, Tieq, Diveq, Expeq, Plpl, Mimi, If, Loop, Declint,
-    Declstring, Semi, LPar, RPar, LMPar, RMPar
+    Declstring, Semi, LPar, RPar, LMPar, RMPar, Print
 };
 
 struct keyWord {
@@ -24,7 +24,7 @@ struct keyWord {
 };
 
 vector<keyWord> KeyWdT = {
-    {"if", If}, {"loop", Loop}, {"int", Declint}, {"string", Declstring}
+    {"if", If}, {"loop", Loop}, {"int", Declint}, {"string", Declstring}, {"print", Print}
 };
 
 bool isNum(char c) {
