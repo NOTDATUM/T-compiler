@@ -7,32 +7,26 @@
 //
 
 #include "Lexer.h"
+#include "Codegen.hpp"
 
 class Parser {
 private:
 	Lexer lexer;
 	Token token;
+	Table vartable;
+	
 public:
 	
 	int compile(string input) {
 		setsource(input);
 		printf("start compilation\n");
 		block();
-		while(token.showtk()!=Eof) {
-			block();
-		}
 	}
 	
 	void block() {
-		while(1) {
-			switch(token.showtk()) {
-				case Declint: case Declstring:
-					varDecl(); continue;
-				default: break;
-			}
-			break;
+		while(token.showtk()!=Eof) {
+			statement();
 		}
-		statement();
 	}
 	
 	void setsource(string input) {
@@ -40,9 +34,12 @@ public:
 		token = lexer.GetToken();
 	}
 	
-	void varDecl() {
-		if(token.showtk()==Declint) {
+	void statement() {
+		VariableStore tindex;
+		switch(token.showtk()) {
+		case Declint:
 			token = lexer.GetToken();
+			vartable.newVar(token.showtext());
 			token = lexer.checkGet(token, Ident);
 			if(token.showtk()==Eq) {
 				token = lexer.GetToken();
@@ -52,18 +49,15 @@ public:
 				token = lexer.GetToken();
 				return;
 			}
-		}
-		else if(token.showtk()==Declstring) {
+			token = lexer.checkGet(token, Semi);
+			return;
+		case Declstring:
 			token = lexer.GetToken();
 			token = lexer.checkGet(token, Ident);
 			token = lexer.checkGet(token, Eq);
 			expression();
-		}
-		token = lexer.checkGet(token, Semi);
-	}
-	
-	void statement() {
-		switch(token.showtk()) {
+			token = lexer.checkGet(token, Semi);
+			return;
 		case If:
 			token = lexer.GetToken();
 			token = lexer.checkGet(token, LPar);
@@ -92,6 +86,7 @@ public:
 		case RMPar:
 			return;
 		case Ident:
+			tindex = vartable.search(token.showtext());
 			token = lexer.GetToken();
 			switch(token.showtk()) {
 				case Eq: case Pleq: case Mieq: case Tieq: case Diveq: case Expeq: break;
@@ -99,7 +94,9 @@ public:
 			}
 			token = lexer.GetToken();
 			expression();
+			genCodeT(mov, tindex);
 			token = lexer.checkGet(token, Semi);
+			return;
 		case Eof:
 			return;
 		default:
@@ -146,6 +143,7 @@ public:
 			token = lexer.GetToken();
 		}
 		else if(token.showtk()==Number) {
+			genCodeV(psh, token.tokenvalue);
 			token = lexer.GetToken();
 		}
 		else if(token.showtk()==LPar) {
@@ -189,7 +187,7 @@ public:
 };
 
 int main() {
-    string input = "";
+    string input = "int a = 0; a = 1;";
     Parser parser;
     Token tok;
     try{
@@ -198,4 +196,11 @@ int main() {
     catch(int exception) {
         return 0;
     }
+    int i = 0;
+    while(i<3) {
+    	if(code[i].opCode!=opr) {
+    		cout<<code[i].opCode<<" "<<code[i].u.v.addr<<" "<<code[i].u.v.name<<"\n";
+    		i++;
+		}
+	}
 }
