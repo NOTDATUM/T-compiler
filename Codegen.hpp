@@ -5,185 +5,239 @@
 #define MAXLEVEL 5
 #include <stdio.h>
 
+// jmp: jumps to another code if the top value of Calcstack is 0, jmp {CodeNumber} ex) jmp 3 
+// psh: pushes number into Calcstack, push {num} ex) push 5
+// def: moves the top value of Calcstack into the Memstack, def {AddressOfVariable} ex) def 0
+// mov: pushes a variable's value into Calcstack, mov {AddressOfVariable} ex) mov 1
+// ret: returns Value
+// <oprerators>: Only interacts with Calcstack
+// neg: changes the sign of the top value, opr neg
+// add: adds the top two values, opr add
+// sub: subtracts the top two values, opr sub
+// mul: multiplies the top two values, opr sub
+// dvs: divides the top two values in an integer value, opr sub
+// eql: checks if the top two values are equal, opr eql
+// lss: checks if the second value is smaller than the first value, opr lss
+// grt: checks if the second value is greater than the first value, opr grt
+// neq: checks if the top two values are different, opr neq
+// lsq: checks if the second value is smaller than or equal with the first value, opr lsq
+// grq: checks if the second value is greater than or equal with the first value, opr grq
+// prt: prints the top value
+
 typedef enum codes {
-	jmp, def, psh, mov, cmp, opr, ret, cal
+	jmp, psh, def, mov, ret, opr
 } OpCode;
 
 typedef enum ops {
-	neg, add, sub, mul, dvs, eql, lss, grt, neq, lsq, grq, str
+	neg, add, sub, mul, dvs, eql, lss, grt, neq, lsq, grq, prt, nothing
 } Operator;
 
-class instcode {
+
+class Inst {
 public:
-	int value;
-	VariableStore v;
-	Operator optr;
+	OpCode opCode;
+	int val = 0;
+	Operator oprCode;
 };
 
-typedef struct inst{
-	OpCode opCode;
-	instcode u;
-} Inst;
-
 Inst code[200];	
-int cIndex = -1;
-void checkMax();
+int cIndex = 0;
 void printCode(int i);
+int Calcstacktop = 0, Memstacktop = 0;
 
-int nextCode()
-{
-	return cIndex+1;
+void genCode(OpCode op, int val, Operator opr) {
+	code[cIndex].opCode = op;
+	code[cIndex].val = val;
+	code[cIndex].oprCode = opr;
+	cIndex++;
+}
+/*
+void genCodeS(OpCode op, int v) {
+	code[cIndex].opCode = op;
+	code[cIndex].addr1 = v;
+	cIndex++; top = v+1;
+	cout<<top<<"??";
 }
 
-int genCodeV(OpCode op, int v)	
+void genCodeV(OpCode op, int v)	
 {
-	checkMax();
 	code[cIndex].opCode = op;
-	code[cIndex].u.value = v;
-	return cIndex;
+	code[cIndex].addr1 = v;
+	code[cIndex].addr2 = top;
+	cIndex++; top++;
 }
 
-int genCodeT(OpCode op, VariableStore ti)	
+int genCodeT(OpCode op, string ti, int first)	
 {
-	checkMax();
 	code[cIndex].opCode = op;
-	code[cIndex].u.v = ti;
+	if(first==-1) {
+		code[cIndex].addr1 = vartable.search(ti).addr;
+		code[cIndex].addr2 = top; top++;
+	}
+	else {
+		code[cIndex].addr1 = top-1;
+		code[cIndex].addr2 = vartable.search(ti).addr;
+	}
+	cIndex++;
+	cout<<top<<"!!"<<"\n";
 	return cIndex;
 }
 
 int genCodeO(Operator p)		
 {
-	checkMax();
 	code[cIndex].opCode = opr;
-	code[cIndex].u.optr = p;
+	code[cIndex].oprCode = p;
+	cIndex++;
+	top--;
 	return cIndex;
 }
 
 int genCodeR()				
 {
 	if (code[cIndex].opCode == ret)
-		return cIndex;		
-	checkMax();
+		return cIndex;	
 	code[cIndex].opCode = ret;
 	// code[cIndex].u.addr.level = bLevel();
 	// code[cIndex].u.addr.addr = fPars();	
+	cIndex++;
 	return cIndex;
-}
-
-void checkMax()	
-{
-	if (++cIndex < MAXCODE)
-		return;
-	// errorF("too many code");
 }
 	
 void backPatch(int i)
 {
-	code[i].u.value = cIndex+1;
-}
+	code[i].addr1 = cIndex+1;
+}*/
 
 void listCode()	
 {
 	int i;
-	/* printf("\ncode\n");
-	for(i=0; i<=cIndex; i++){
+	printf("\ncode\n");
+	for(i=0; i<cIndex; i++) {
 		printf("%3d: ", i);
 		printCode(i);
-	}*/
+	}
 }
 
 void printCode(int i)
 {
-	int flag;
-	switch(code[i].opCode){
-	case psh: printf("psh"); flag=1; break;
-	case opr: printf("opr"); flag=3; break;
-	case mov: printf("mov"); flag=2; break;
-	case cal: printf("cal"); flag=2; break;
-	case ret: printf("ret"); flag=2; break;
-	case def: printf("def"); flag=1; break;
-	case jmp: printf("jmp"); flag=1; break;
-	case cmp: printf("cmp"); flag=1; break;
+	switch(code[i].opCode) {
+		case jmp: printf("jmp "); break;
+		case psh: printf("psh "); break;
+		case def: printf("def "); break;
+		case mov: printf("mov "); break;
+		case ret: printf("ret "); break;
+		case opr:
+			printf("opr ");
+			switch(code[i].oprCode) {
+				case neg: printf("neg "); break;
+				case add: printf("add "); break;
+				case sub: printf("sub "); break;
+				case mul: printf("mul "); break;
+				case dvs: printf("dvs "); break;
+				case eql: printf("eql "); break;
+				case lss: printf("lss "); break;
+				case grt: printf("grt "); break;
+				case neq: printf("neq "); break;
+				case lsq: printf("lsq "); break;
+				case grq: printf("grq "); break;
+				case prt: printf("prt "); break;
+				default: break;
+			}	
+			break;
+		default: break;
 	}
-	switch(flag){
-	case 1:
-		printf(",%d\n", code[i].u.value);
-		return;
-	case 2:
-		//printf(",%d", code[i].u.addr.level);
-		//printf(",%d\n", code[i].u.addr.addr);
-		return;
-	case 3:
-		switch(code[i].u.optr){
-		case neg: printf(",neg\n"); return;
-		case add: printf(",add\n"); return;
-		case sub: printf(",sub\n"); return;
-		case mul: printf(",mul\n"); return;
-		case dvs: printf(",dvs\n"); return;
-		case eql: printf(",eq\n"); return;
-		case lss: printf(",lss\n"); return;
-		case grt: printf(",grt\n"); return;
-		case neq: printf(",neq\n"); return;
-		case lsq: printf(",lsq\n"); return;
-		case grq: printf(",grq\n"); return;
-		case str: printf(",str\n"); return;
-		}
+	if(code[i].opCode!=opr) {
+		printf("%d ", code[i].val);
 	}
+	printf("\n");
 }	
+
+
 
 void execute()
 {
-	int stack[MAXMEM];
-	int display[MAXLEVEL];
-	int pc, top, lev, temp;
-	Inst i;
-	printf("start execution\n");
-	top = 0;  pc = 0;
-	stack[0] = 0;  stack[1] = 0;
-	display[0] = 0;	
-	do {
-		i = code[pc++];		
-		switch(i.opCode){
-		case psh: stack[top++] = i.u.value; 
+	int memstack[MAXMEM];
+	int calcstack[MAXMEM];
+	int calcstacktop = -1;
+	int i = 0;
+	while(i<cIndex) {
+		switch(code[i].opCode) {
+			case jmp:
+				if(calcstack[calcstacktop]==0) i = code[i].val - 1;
 				break;
-		case mov: //stack[top++] = stack[display[i.u.addr.level] + i.u.addr.addr]; 
-				 break;
-		case cal: //lev = i.u.addr.level +1;
-				stack[top] = display[lev]; 
-				stack[top+1] = pc; display[lev] = top; 
-				//pc = i.u.addr.addr;
-				 break;
-		case ret: temp = stack[--top];	
-				//top = display[i.u.addr.level];  
-				//display[i.u.addr.level] = stack[top];
-				pc = stack[top+1];
-				//top -= i.u.addr.addr;
-				stack[top++] = temp;
+			case psh:
+				calcstacktop++;
+				calcstack[calcstacktop] = code[i].val;
 				break;
-		case def: top += i.u.value; 
-				if (top >= MAXMEM-MAXREG)
-					//errorF("stack overflow");
+			case def:
+				memstack[code[i].val] = calcstack[calcstacktop];
+				calcstacktop--;
 				break;
-		case jmp: pc = i.u.value; break;
-		case cmp: if (stack[--top] == 0)
-					pc = i.u.value;
+			case mov:
+				calcstacktop++;
+				calcstack[calcstacktop] = memstack[code[i].val];
 				break;
-		case opr: 
-			switch(i.u.optr){
-			case neg: stack[top-1] = -stack[top-1]; continue;
-			case add: --top;  stack[top-1] += stack[top]; continue;
-			case sub: --top; stack[top-1] -= stack[top]; continue;
-			case mul: --top;  stack[top-1] *= stack[top];  continue;
-			case dvs: --top;  stack[top-1] /= stack[top]; continue;
-			case eql: --top;  stack[top-1] = (stack[top-1] == stack[top]); continue;
-			case lss: --top;  stack[top-1] = (stack[top-1] < stack[top]); continue;
-			case grt: --top;  stack[top-1] = (stack[top-1] > stack[top]); continue;
-			case neq: --top;  stack[top-1] = (stack[top-1] != stack[top]); continue;
-			case lsq: --top;  stack[top-1] = (stack[top-1] <= stack[top]); continue;
-			case grq: --top;  stack[top-1] = (stack[top-1] >= stack[top]); continue;
-			case str: printf("%d ", stack[--top]); continue;
-			}
+			case ret:
+				break;
+			case opr:
+				switch(code[i].oprCode) {
+					case neg:
+						calcstack[calcstacktop] *= -1;
+						break;
+					case add:
+						calcstack[calcstacktop-1] += calcstack[calcstacktop];
+						calcstacktop--;
+						break;
+					case sub:
+						calcstack[calcstacktop-1] -= calcstack[calcstacktop];
+						calcstacktop--;
+						break;
+					case mul:
+						calcstack[calcstacktop-1] *= calcstack[calcstacktop];
+						calcstacktop--;
+						break;
+					case dvs:
+						calcstack[calcstacktop-1] /= calcstack[calcstacktop];
+						calcstacktop--;
+						break;
+					case eql:
+						calcstack[calcstacktop-1] = (calcstack[calcstacktop-1] == calcstack[calcstacktop]);
+						calcstacktop--;
+						break;
+					case lss:
+						calcstack[calcstacktop-1] = (calcstack[calcstacktop-1] < calcstack[calcstacktop]);
+						calcstacktop--;
+						break;
+					case grt:
+						calcstack[calcstacktop-1] = (calcstack[calcstacktop-1] > calcstack[calcstacktop]);
+						calcstacktop--;
+						break;
+					case neq:
+						calcstack[calcstacktop-1] = (calcstack[calcstacktop-1] != calcstack[calcstacktop]);
+						calcstacktop--;
+						break;
+					case lsq:
+						calcstack[calcstacktop-1] = (calcstack[calcstacktop-1] <= calcstack[calcstacktop]);
+						calcstacktop--;
+						break;
+					case grq:
+						calcstack[calcstacktop-1] = (calcstack[calcstacktop-1] >= calcstack[calcstacktop]);
+						calcstacktop--;
+						break;
+					case prt:
+						printf("print:%d\n", calcstack[calcstacktop]);
+						break;
+					default:
+						break;
+				}
+			default:
+				break;
 		}
-	} while (pc != 0);
+		i++;
+		for(int j = 0; j<10; j++) {
+			printf("%d ", calcstack[j]);
+		}
+		printf("\n");
+	}
 }
 

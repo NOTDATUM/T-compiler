@@ -8,27 +8,28 @@ public:
 	int addr;
 };
 
-
 class Table {
 public:
 	VariableStore Vartable[10000];
 	int tIndex = 0;
+	int addr = 0;
 	void newVar(string name) {
-		tIndex++;
-		Vartable[tIndex].name = name;
+		Vartable[tIndex].addr = addr++;
+		Vartable[tIndex++].name = name;
 	}
 	
-	int search(string name) {
-		for(int i = 0; i<=tIndex; i++) {
+	VariableStore search(string name) {
+		for(int i = 0; i<tIndex; i++) {
 			if(name==Vartable[i].name) {
-				return i;
+				return Vartable[i];
 			}
 		}
 		cout<<"Unknown Variable "<<name;
 		throw(0);
-		return 0;
+		return Vartable[9999];
 	}
 };
+Table vartable;
 
 
 

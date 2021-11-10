@@ -1,0 +1,6 @@
+var a; const b = 7, c = 8;
+var d; var e;
+begin
+	a := b+c;
+	write a;
+end.

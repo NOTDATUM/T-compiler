@@ -13,8 +13,6 @@ class Parser {
 private:
 	Lexer lexer;
 	Token token;
-	Table vartable;
-	
 public:
 	
 	int compile(string input) {
@@ -35,7 +33,8 @@ public:
 	}
 	
 	void statement() {
-		VariableStore tindex;
+		string identname;
+		int backpatchindex;
 		switch(token.showtk()) {
 		case Declint:
 			token = lexer.GetToken();
@@ -50,6 +49,7 @@ public:
 				return;
 			}
 			token = lexer.checkGet(token, Semi);
+			genCode(def, vartable.tIndex-1, nothing);
 			return;
 		case Declstring:
 			token = lexer.GetToken();
@@ -61,10 +61,13 @@ public:
 		case If:
 			token = lexer.GetToken();
 			token = lexer.checkGet(token, LPar);
-			expression();
+			condition();
 			token = lexer.checkGet(token, RPar);
+			backpatchindex = cIndex;
+			genCode(jmp, 0, nothing);
 			token = lexer.checkGet(token, LMPar);
 			statement();
+			code[backpatchindex].val = cIndex;
 			token = lexer.checkGet(token, RMPar);
 			return;
 		case Loop:
@@ -82,11 +85,13 @@ public:
 			expression();
 			token = lexer.checkGet(token, RPar);
 			token = lexer.checkGet(token, Semi);
+			genCode(opr, 0, prt);
 			return;
 		case RMPar:
 			return;
 		case Ident:
-			tindex = vartable.search(token.showtext());
+			identname = token.showtext();
+//			cout<<identname;
 			token = lexer.GetToken();
 			switch(token.showtk()) {
 				case Eq: case Pleq: case Mieq: case Tieq: case Diveq: case Expeq: break;
@@ -94,7 +99,7 @@ public:
 			}
 			token = lexer.GetToken();
 			expression();
-			genCodeT(mov, tindex);
+			genCode(def, vartable.search(identname).addr, nothing);
 			token = lexer.checkGet(token, Semi);
 			return;
 		case Eof:
@@ -118,6 +123,12 @@ public:
 		while(k==Plus || k==Minus) {
 			token = lexer.GetToken();
 			term();
+			if(k==Plus) {
+				genCode(opr, 0, add);
+			}
+			else {
+				genCode(opr, 0, sub);
+			}
 			k = token.showtk();
 		}
 		return;
@@ -128,22 +139,38 @@ public:
 		factor();
 		k = token.showtk();
 		while(k==Times || k==Div) {
+			cout<<token.showtext()<<"!!";
 			token = lexer.GetToken();
 			factor();
+			if(k==Times) {
+				genCode(opr, 0, mul);
+			}
+			else {
+				genCode(opr, 0, dvs);
+			}
 			k = token.showtk();
 		}
 	}
 	
 	void factor() {
 		Tokenkind k;
+		int i = 0;
 		while(token.showtk() == Plus || token.showtk()==Minus) {
+			if(token.showtk()==Minus) {
+				i += 1;
+			}
 			token = lexer.GetToken();
+			i%=2;
+		}
+		if(i==1) {
+			genCode(opr, 0, neg);
 		}
 		if(token.showtk()==Ident) {
+			genCode(mov, vartable.search(token.showtext()).addr, nothing);
 			token = lexer.GetToken();
 		}
 		else if(token.showtk()==Number) {
-			genCodeV(psh, token.tokenvalue);
+			genCode(psh, token.tokenvalue, nothing);
 			token = lexer.GetToken();
 		}
 		else if(token.showtk()==LPar) {
@@ -176,18 +203,19 @@ public:
 		token = lexer.GetToken();
 		expression();
 		switch(k) {
-			case Eqeq: break;
-			case Noteq: break;
-			case Gr: break;
-			case Less: break;
-			case Greq: break;
-			case Lesseq: break;
+			case Eqeq: genCode(opr, 0, eql); break;
+			case Noteq: genCode(opr, 0, neq); break;
+			case Gr: genCode(opr, 0, grt); break;
+			case Less: genCode(opr, 0, lss); break;
+			case Greq: genCode(opr, 0, grq); break;
+			case Lesseq: genCode(opr, 0, lsq); break;
+			default: break;
 		}
 	}
 };
 
 int main() {
-    string input = "int a = 0; a = 1;";
+    string input = "int a = 2; if(a/2==1) {print(a);}";
     Parser parser;
     Token tok;
     try{
@@ -197,10 +225,6 @@ int main() {
         return 0;
     }
     int i = 0;
-    while(i<3) {
-    	if(code[i].opCode!=opr) {
-    		cout<<code[i].opCode<<" "<<code[i].u.v.addr<<" "<<code[i].u.v.name<<"\n";
-    		i++;
-		}
-	}
+    listCode();
+    execute();
 }

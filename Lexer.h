@@ -42,11 +42,10 @@ bool isLetter(char c) {
 }
 
 class Token {
-private:
+public:
     Tokenkind tk;
     string tokentext = "";
     int tokenvalue = 0;
-public:
     void init(Tokenkind nowtk, string nowtokentext) {
         tk = nowtk;
         tokentext = nowtokentext;
