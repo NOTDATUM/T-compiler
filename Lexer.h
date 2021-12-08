@@ -13,9 +13,16 @@
 using namespace std;
 
 enum Tokenkind {
-    Eof = -1, Plus = 0, Minus, Times, Div, Eq, Exp, Gr, Less, Greq, Lesseq, Eqeq, Noteq,
-    Number, Ident, String, Pleq, Mieq, Tieq, Diveq, Expeq, Plpl, Mimi, If, Loop, Declint,
-    Declstring, Semi, LPar, RPar, LMPar, RMPar, Print
+    Eof = -1,
+	Plus = 0,
+	Minus, Times, Div, Eq, Rem,
+	Gr, Less, Greq, Lesseq, Eqeq, Noteq,
+    Number, Ident, String, Bool,
+	Pleq, Mieq, Tieq, Diveq, Remeq,
+	Do, Def, Cnt,
+	Num, Declint, Declfloat, Declstring,
+	Semi, Colon, LPar, RPar, LMPar, RMPar, Point,
+	Print, Input
 };
 
 struct keyWord {
@@ -24,7 +31,7 @@ struct keyWord {
 };
 
 vector<keyWord> KeyWdT = {
-    {"if", If}, {"loop", Loop}, {"int", Declint}, {"string", Declstring}, {"print", Print}
+	{"do", Do}, {"def", Def}, {"num", Num}, {"int", Declint}, {"float", Declfloat}, {"str", Declstring}, {"print", Print}, {"input", Input}
 };
 
 bool isNum(char c) {
@@ -101,23 +108,19 @@ public:
     Token GetToken() {
         Token token;
         skipSpace();
-        while(curChar=='#') {
-            nextChar();
-            while(curChar!='#') {
-                nextChar();
-                if(curChar=='\0') abort("No Ending '#'");
-            }
-            nextChar();
-            skipSpace();
-        }
+//        while(curChar=='#') {
+//            nextChar();
+//            while(curChar!='#') {
+//                nextChar();
+//                if(curChar=='\0') abort("No Ending '#'");
+//            }
+//            nextChar();
+//            skipSpace();
+//        }
         if(curChar=='+') {
             if(peek()=='=') {
                 nextChar();
                 token.init(Pleq, "+=");
-            }
-            else if(peek()=='+') {
-                nextChar();
-                token.init(Plpl, "++");
             }
             else {
                 token.init(Plus, string(1, curChar));
@@ -127,10 +130,6 @@ public:
             if(peek()=='=') {
                 nextChar();
                 token.init(Mieq, "-=");
-            }
-            else if(peek()=='-') {
-                nextChar();
-                token.init(Mimi, "--");
             }
             else {
                 token.init(Minus, string(1, curChar));
@@ -154,13 +153,13 @@ public:
                 token.init(Div, string(1, curChar));
             }
         }
-        else if(curChar=='^') {
+        else if(curChar=='%') {
             if(peek()=='=') {
                 nextChar();
-                token.init(Expeq, "^=");
+                token.init(Remeq, "%=");
             }
             else {
-                token.init(Exp, string(1, curChar));
+                token.init(Rem, string(1, curChar));
             }
         }
         else if(curChar=='=') {
@@ -214,6 +213,9 @@ public:
         else if(curChar==';') {
             token.init(Semi, string(1, curChar));
         }
+        else if(curChar==':') {
+        	token.init(Colon, string(1, curChar));
+		}
         else if(curChar=='(') {
             token.init(LPar, string(1, curChar));
         }
@@ -226,6 +228,9 @@ public:
         else if(curChar=='}') {
             token.init(RMPar, string(1, curChar));
         }
+        else if(curChar=='.') {
+        	token.init(Point, string(1, curChar));
+		}
         else if(isNum(curChar)) {
             string result = string(1, curChar);
             int nowvalue = (int)curChar-48;

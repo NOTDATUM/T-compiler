@@ -18,9 +18,14 @@ public:
 		Vartable[tIndex++].name = name;
 	}
 	
+	void delVar(string name) {
+		VariableStore x = search(name);
+		Vartable[x.addr].addr = -1;
+	}
+	
 	VariableStore search(string name) {
 		for(int i = 0; i<tIndex; i++) {
-			if(name==Vartable[i].name) {
+			if(name==Vartable[i].name and Vartable[i].addr!=-1) {
 				return Vartable[i];
 			}
 		}

@@ -35,50 +35,103 @@ public:
 	void statement() {
 		string identname;
 		int backpatchindex;
+		int oprtoken = 0;
 		switch(token.showtk()) {
-		case Declint:
+		case Def:
 			token = lexer.GetToken();
-			vartable.newVar(token.showtext());
-			token = lexer.checkGet(token, Ident);
-			if(token.showtk()==Eq) {
-				token = lexer.GetToken();
-				expression();
+			switch(token.showtk()) {
+				case Num:
+					token = lexer.GetToken();
+					token = lexer.checkGet(token, Point);
+					switch(token.showtk()) {
+						case Declint:
+							token = lexer.GetToken();
+							vartable.newVar(token.showtext());
+							token = lexer.checkGet(token, Ident);
+							if(token.showtk()==Eq) {
+								token = lexer.GetToken();
+								expression();
+							}
+							else if(token.showtk()==Semi) {
+								token = lexer.GetToken();
+								return;
+							}
+							token = lexer.checkGet(token, Semi);
+							genCode(def, vartable.tIndex-1, nothing);
+							return;
+						default:
+							error();
+							return;
+					}
+					
+				case Declstring:
+					token = lexer.GetToken();
+					token = lexer.checkGet(token, Ident);
+					token = lexer.checkGet(token, Eq);
+					expression();
+					token = lexer.checkGet(token, Semi);
+					return;
+				default:
+					error();
+					return;
 			}
-			else if(token.showtk()==Semi) {
-				token = lexer.GetToken();
-				return;
-			}
-			token = lexer.checkGet(token, Semi);
-			genCode(def, vartable.tIndex-1, nothing);
-			return;
-		case Declstring:
+			break;
+		case Do:
 			token = lexer.GetToken();
-			token = lexer.checkGet(token, Ident);
-			token = lexer.checkGet(token, Eq);
+			token = lexer.checkGet(token, LPar);
 			expression();
-			token = lexer.checkGet(token, Semi);
-			return;
-		case If:
-			token = lexer.GetToken();
-			token = lexer.checkGet(token, LPar);
-			condition();
-			token = lexer.checkGet(token, RPar);
-			backpatchindex = cIndex;
-			genCode(jmp, 0, nothing);
-			token = lexer.checkGet(token, LMPar);
-			statement();
-			code[backpatchindex].val = cIndex;
-			token = lexer.checkGet(token, RMPar);
-			return;
-		case Loop:
-			token = lexer.GetToken();
-			token = lexer.checkGet(token, LPar);
-			condition();
-			token = lexer.checkGet(token, RPar);
-			token = lexer.checkGet(token, LMPar);
-			statement();
-			token = lexer.checkGet(token, RMPar);
-			return;
+			if(token.showtk()==RPar) {
+				vartable.newVar("cnt");
+				int cntindex = vartable.tIndex-1;
+				int doline = cIndex;
+				int lasttop = Calcstacktop;
+				token = lexer.GetToken();
+				genCode(def, cntindex, nothing);
+				token = lexer.checkGet(token, LMPar);
+				while(token.showtk()!=RMPar) {
+					statement();
+				}
+				token = lexer.checkGet(token, RMPar);
+				genCode(top, lasttop, nothing);
+				genCode(mov, cntindex, nothing);
+				genCode(psh, 1, nothing);
+				genCode(opr, 0, sub);
+				genCode(jmp, doline, nothing);
+			}
+			else {
+				token = lexer.checkGet(token, Colon);
+				condition();
+				if(lexer.peek()==RPar) {
+					
+				}
+				else {
+					token = lexer.checkGet(token, Colon);
+					
+				}
+			}
+			break;
+//			condition();
+//		case If:
+//			token = lexer.GetToken();
+//			token = lexer.checkGet(token, LPar);
+//			condition();
+//			token = lexer.checkGet(token, RPar);
+//			backpatchindex = cIndex;
+//			genCode(jmp, 0, nothing);
+//			token = lexer.checkGet(token, LMPar);
+//			statement();
+//			code[backpatchindex].val = cIndex;
+//			token = lexer.checkGet(token, RMPar);
+//			return;
+//		case Loop:
+//			token = lexer.GetToken();
+//			token = lexer.checkGet(token, LPar);
+//			condition();
+//			token = lexer.checkGet(token, RPar);
+//			token = lexer.checkGet(token, LMPar);
+//			statement();
+//			token = lexer.checkGet(token, RMPar);
+//			return;
 		case Print:
 			token = lexer.GetToken();
 			token = lexer.checkGet(token, LPar);
@@ -91,14 +144,42 @@ public:
 			return;
 		case Ident:
 			identname = token.showtext();
-//			cout<<identname;
 			token = lexer.GetToken();
+			oprtoken = token.showtk();
 			switch(token.showtk()) {
-				case Eq: case Pleq: case Mieq: case Tieq: case Diveq: case Expeq: break;
+				case Eq: case Pleq: case Mieq: case Tieq: case Diveq: case Remeq: break;
 				default: error(); break;
 			}
 			token = lexer.GetToken();
 			expression();
+			switch(oprtoken) {
+				case Eq:
+					break;
+				case Pleq:
+					genCode(mov, vartable.search(identname).addr, nothing);
+					genCode(opr, 0, add);
+					break;
+				case Mieq:
+					genCode(mov, vartable.search(identname).addr, nothing);
+					genCode(opr, 0, sub);
+					genCode(opr, 0, neg);
+					break;
+				case Tieq:
+					genCode(mov, vartable.search(identname).addr, nothing);
+					genCode(opr, 0, mul);
+					break;
+				case Diveq:
+					genCode(mov, vartable.search(identname).addr, nothing);
+					genCode(opr, 0, dvs);
+					break;
+				case Remeq:
+					genCode(mov, vartable.search(identname).addr, nothing);
+					genCode(opr, 0, add); // !!
+					break;
+				default:
+					error();
+					break;
+			}
 			genCode(def, vartable.search(identname).addr, nothing);
 			token = lexer.checkGet(token, Semi);
 			return;
@@ -215,7 +296,7 @@ public:
 };
 
 int main() {
-    string input = "int a = 2; if(a/2==1) {print(a);}";
+    string input = "def num.int a = 100000000; do(a) {a+=1;} print(a);";
     Parser parser;
     Token tok;
     try{
@@ -225,6 +306,6 @@ int main() {
         return 0;
     }
     int i = 0;
-    listCode();
+	listCode();
     execute();
 }
