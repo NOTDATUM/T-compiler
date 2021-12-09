@@ -170,8 +170,6 @@ void printCode(int i)
 	printf("\n");
 }	
 
-
-
 void execute()
 {
 	int memstack[MAXMEM];
@@ -245,7 +243,7 @@ void execute()
 						calcstacktop--;
 						break;
 					case prt:
-						printf("print:%d\n", calcstack[calcstacktop]);
+						printf("%d\n", calcstack[calcstacktop]);
 						break;
 					case inp:
 						int x;
