@@ -13,8 +13,8 @@ enum Tokenkind {
     Number, Ident, String, Bool,
 	Pleq, Mieq, Tieq, Diveq, Remeq,
 	Do, Def, Cnt,
-	Num, Declint, Declfloat, Declstring, Func,
-	Semi, Colon, LPar, RPar, LMPar, RMPar, Point,
+	Num, Declint, Declfloat, Declstring, Declarr, Func,
+	Semi, Colon, LPar, RPar, LMPar, RMPar, LBPar, RBPar, Point,
 	Print, Input, Return
 };
 
@@ -25,7 +25,7 @@ struct keyWord {
 
 vector<keyWord> KeyWdT = {
 	{"do", Do}, {"def", Def}, {"num", Num}, {"int", Declint}, {"float", Declfloat}, {"str", Declstring}, {"func", Func}, {"output", Print}, {"input", Input},
-	{"return", Return}
+	{"return", Return}, {"arr", Declarr}
 };
 
 bool isNum(char c) {
@@ -196,6 +196,14 @@ public:
             nextChar();
             string result = "";
             while(curChar!='\"') {
+            	if(curChar=='\\') {
+            		nextChar();
+            		if(curChar=='n') {
+            			result+='\n';
+					}
+					nextChar();
+					continue;
+				}
                 if(curChar=='\0') {
                     abort("No ending \".");
                 }
@@ -222,6 +230,12 @@ public:
         else if(curChar=='}') {
             token.init(RMPar, string(1, curChar));
         }
+        else if(curChar=='[') {
+        	token.init(LBPar, string(1, curChar));
+		}
+		else if(curChar==']') {
+			token.init(RBPar, string(1, curChar));
+		}
         else if(curChar=='.') {
         	token.init(Point, string(1, curChar));
 		}

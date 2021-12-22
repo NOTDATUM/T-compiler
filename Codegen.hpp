@@ -9,6 +9,9 @@
 // cal: jumps to another code with no condition, cal {CodeNumber} ex) cal 3
 // psh: pushes number into Calcstack, push {num} ex) push 5
 // def: moves the top value of Calcstack into the Memstack, def {AddressOfVariable} ex) def 0
+// mtp: sets the top value as the pointer of Memstack, mtp ex) mtp
+// sav: saves the top value to the Memstack with the pointer, sav ex) sav
+// mop: moves the Memstack with the pointer into Calcstack, mop ex) mop
 // mov: pushes a variable's value into Calcstack, mov {AddressOfVariable} ex) mov 1
 // ret: jumps to the line of top value of Calcstack, ret, ex) ret
 // top: changes the top address of Calcstack, top {Address} ex) top 1
@@ -28,14 +31,15 @@
 // grq: checks if the second value is greater than or equal with the first value, opr grq
 // inv: returns 1 if the top value is 0, 0 if the top value isn't 0, opr inv
 // prt: prints the top value
+// pch: prints the top value as char
 // inp: inputs one value and pushes it
 
 typedef enum codes {
-	jmp, cal, psh, def, mov, ret, opr, top, ttp, swp
+	jmp, cal, psh, def, mtp, sav, mop, mov, ret, opr, top, ttp, swp
 } OpCode;
 
 typedef enum ops {
-	neg, add, sub, mul, dvs, eql, lss, grt, neq, lsq, grq, inv, prt, inp, nothing
+	neg, add, sub, mul, dvs, eql, lss, grt, neq, lsq, grq, inv, prt, pch, inp, nothing
 } Operator;
 
 
@@ -57,9 +61,9 @@ void genCode(OpCode op, int val, Operator oper) {
 	code[cIndex].oprCode = oper;
 	cIndex++;
 	switch(op) {
-		case psh: case mov:
+		case psh: case mov: case mop:
 			Calcstacktop++; break;
-		case def: Calcstacktop--; break;
+		case def: case mtp: case sav: Calcstacktop--; break;
 		case top: Calcstacktop = val; break;
 		case ttp: Calcstacktop += val; break;
 		case opr:
@@ -146,6 +150,9 @@ void printCode(int i)
 		case cal: printf("cal "); break;
 		case psh: printf("psh "); break;
 		case def: printf("def "); break;
+		case mtp: printf("mtp "); break;
+		case sav: printf("sav "); break;
+		case mop: printf("mop "); break;
 		case mov: printf("mov "); break;
 		case ret: printf("ret "); break;
 		case top: printf("top "); break;
@@ -167,6 +174,7 @@ void printCode(int i)
 				case grq: printf("grq "); break;
 				case inv: printf("inv "); break;
 				case prt: printf("prt "); break;
+				case pch: printf("pch "); break;
 				case inp: printf("inp "); break;
 				default: break;
 			}	
@@ -184,6 +192,7 @@ void execute()
 	int memstack[MAXMEM];
 	int calcstack[MAXMEM];
 	int calcstacktop = -1;
+	int mempointer = 0;
 	int i = 0;
 	while(i<cIndex) {
 		switch(code[i].opCode) {
@@ -200,6 +209,18 @@ void execute()
 			case def:
 				memstack[code[i].val] = calcstack[calcstacktop];
 				calcstacktop--;
+				break;
+			case mtp:
+				mempointer = calcstack[calcstacktop];
+				calcstacktop--;
+				break;
+			case sav:
+				memstack[mempointer] = calcstack[calcstacktop];
+				calcstacktop--;
+				break;
+			case mop:
+				calcstacktop++;
+				calcstack[calcstacktop] = memstack[mempointer];
 				break;
 			case mov:
 				calcstacktop++;
@@ -266,7 +287,10 @@ void execute()
 						calcstack[calcstacktop] = int(not calcstack[calcstacktop]);
 						break;
 					case prt:
-						printf("%d\n", calcstack[calcstacktop]);
+						printf("%d", calcstack[calcstacktop]);
+						break;
+					case pch:
+						printf("%c", calcstack[calcstacktop]);
 						break;
 					case inp:
 						int x;
@@ -286,6 +310,10 @@ void execute()
 //			printf("%d ", calcstack[j]);
 //		}
 //		printf("\n");
+//		for(int j = 0; j<10; j++) {
+//			printf("%d ", memstack[j]);
+//		}
+//		printf("\n\n");
 	}
 }
 

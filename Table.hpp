@@ -6,6 +6,7 @@ class VariableStore {
 public:
 	string name;
 	int addr;
+	int len = 1;
 };
 
 class Table {
@@ -13,9 +14,12 @@ public:
 	VariableStore Vartable[10000];
 	int tIndex = 0;
 	int addr = 0;
-	void newVar(string name) {
-		Vartable[tIndex].addr = addr++;
-		Vartable[tIndex++].name = name;
+	void newVar(string name, int len) {
+		Vartable[tIndex].addr = addr;
+		Vartable[tIndex].len = len;
+		Vartable[tIndex].name = name;
+		tIndex++;
+		addr += len;
 	}
 	
 	void delVar(string name) {

@@ -39,7 +39,7 @@ public:
 					switch(token.showtk()) {
 						case Declint:
 							token = lexer.GetToken();
-							vartable.newVar(token.showtext());
+							vartable.newVar(token.showtext(), 1);
 							token = lexer.checkGet(token, Ident);
 							if(token.showtk()==Eq) {
 								token = lexer.GetToken();
@@ -50,12 +50,24 @@ public:
 								return;
 							}
 							token = lexer.checkGet(token, Semi);
-							genCode(def, vartable.tIndex-1, nothing);
+							genCode(def, vartable.addr-1, nothing);
 							return;
 						default:
 							error();
 							return;
 					}
+				case Declarr:
+					token = lexer.checkGet(token, Declarr);
+					token = lexer.checkGet(token, LBPar);
+					if(token.showtk()==Number) {
+						int arrlen = token.tokenvalue;
+						token = lexer.checkGet(token, Number);
+						token = lexer.checkGet(token, RBPar);
+						vartable.newVar(token.showtext(), arrlen);
+						token = lexer.checkGet(token, Ident);
+						token = lexer.checkGet(token, Semi);
+					}
+					break;
 				case Declstring:
 					token = lexer.GetToken();
 					token = lexer.checkGet(token, Ident);
@@ -92,8 +104,8 @@ public:
 			token = lexer.checkGet(token, LPar);
 			expression();
 			if(token.showtk()==RPar) {
-				vartable.newVar("cnt");
-				int cntindex = vartable.tIndex-1;
+				vartable.newVar("cnt", 1);
+				int cntindex = vartable.addr-1;
 				int doline = cIndex;
 				int lasttop = Calcstacktop;
 				token = lexer.GetToken();
@@ -112,8 +124,8 @@ public:
 			else {
 				token = lexer.checkGet(token, Colon);
 				int doline = cIndex;
-				vartable.newVar("cnt");
-				int cntindex = vartable.tIndex-1;
+				vartable.newVar("cnt", 1);
+				int cntindex = vartable.addr-1;
 				int lasttop = Calcstacktop;
 				genCode(def, cntindex, nothing);
 				condition();
@@ -174,6 +186,16 @@ public:
 		case Print:
 			token = lexer.GetToken();
 			token = lexer.checkGet(token, LPar);
+			if(token.showtk()==String) {
+				for(int stringcnt = 0; stringcnt<token.showtext().length() ; stringcnt++) {
+					genCode(psh, (int)token.showtext()[stringcnt], nothing);
+					genCode(opr, 0, pch);
+				}
+				token = lexer.checkGet(token, String);
+				token = lexer.checkGet(token, RPar);
+				token = lexer.checkGet(token, Semi);
+				return;
+			}
 			expression();
 			token = lexer.checkGet(token, RPar);
 			token = lexer.checkGet(token, Semi);
@@ -194,6 +216,54 @@ public:
 				return;
 			}
 			token = lexer.GetToken();
+			if(token.showtk()==LBPar) {
+				token = lexer.checkGet(token, LBPar);
+				expression();
+				genCode(psh, vartable.search(identname).addr, nothing);
+				genCode(opr, 0, add);
+				token = lexer.checkGet(token, RBPar);
+				oprtoken = token.showtk();
+				switch(token.showtk()) {
+					case Eq: case Pleq: case Mieq: case Tieq: case Diveq: case Remeq: break;
+					default: error(); break;
+				}
+				token = lexer.GetToken();
+				expression();
+				genCode(ttp, -1, nothing);
+				genCode(mtp, 0, nothing);
+				genCode(ttp, 2, nothing);
+				switch(oprtoken) {
+					case Eq:
+						break;
+					case Pleq:
+						genCode(mop, 0, nothing);
+						genCode(opr, 0, add);
+						break;
+					case Mieq:
+						genCode(mop, 0, nothing);
+						genCode(opr, 0, sub);
+						genCode(opr, 0, neg);
+						break;
+					case Tieq:
+						genCode(mop, 0, nothing);
+						genCode(opr, 0, mul);
+						break;
+					case Diveq:
+						genCode(mop, 0, nothing);
+						genCode(opr, 0, dvs);
+						break;
+					case Remeq:
+						genCode(mop, 0, nothing);
+						genCode(opr, 0, add); // !!
+						break;
+					default:
+						error();
+						break;
+				}
+				genCode(sav, 0, nothing);
+				token = lexer.checkGet(token, Semi);
+				return;
+			}
 			oprtoken = token.showtk();
 			switch(token.showtk()) {
 				case Eq: case Pleq: case Mieq: case Tieq: case Diveq: case Remeq: break;
@@ -269,7 +339,7 @@ public:
 		factor();
 		k = token.showtk();
 		while(k==Times || k==Div) {
-			cout<<token.showtext()<<"!!";
+//			cout<<token.showtext()<<"!!";
 			token = lexer.GetToken();
 			factor();
 			if(k==Times) {
@@ -295,14 +365,33 @@ public:
 		
 		if(token.showtk()==Ident) {
 			string name = token.showtext();
-			while(lexer.peek()=='.') {
+			if(functable.searchFunc(name).codeline!=-1) {
+				token = lexer.checkGet(token, Ident);
+				genCode(psh, cIndex+2, nothing);
+				genCode(cal, functable.searchFunc(name).codeline, nothing);
+				genCode(ttp, 1, nothing);
+				genCode(swp, -1, nothing);
+				genCode(ttp, -1, nothing);
+				return;
+			}
+			token = lexer.checkGet(token, Ident);
+			if(token.showtk()==LBPar) {
+				token = lexer.checkGet(token, LBPar);
+				expression();
+				token = lexer.checkGet(token, RBPar);
+				genCode(psh, vartable.search(name).addr, nothing);
+				genCode(opr, 0, add);
+				genCode(mtp, 0, nothing);
+				genCode(mop, 0, nothing);
+				return;
+			}
+			while(token.showtk()=='.') {
 				token = lexer.checkGet(token, Point);
 				name = name + ".";
 				token = lexer.GetToken();
 				name = name + token.showtext();
 			}
-			genCode(mov, vartable.search(token.showtext()).addr, nothing);
-			token = lexer.GetToken();
+			genCode(mov, vartable.search(name).addr, nothing);
 		}
 		else if(token.showtk()==Number) {
 			genCode(psh, token.tokenvalue, nothing);
