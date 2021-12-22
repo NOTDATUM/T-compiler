@@ -25,7 +25,7 @@ public:
 	
 	VariableStore search(string name) {
 		for(int i = 0; i<tIndex; i++) {
-			if(name==Vartable[i].name and Vartable[i].addr!=-1) {
+			if(name==Vartable[i].name && Vartable[i].addr!=-1) {
 				return Vartable[i];
 			}
 		}
@@ -37,4 +37,31 @@ public:
 Table vartable;
 
 
+class FuncStore {
+public:
+	string name;
+	int codeline;
+};
+
+class FuncTable {
+public:
+	FuncStore Functable[1000];
+	int findex = 0;
+	int addr = 0;
+	FuncStore error = {"", -1};
+	void newFunc(int codeline, string name) {
+		Functable[findex].codeline = codeline;
+		Functable[findex++].name = name;
+	}
+	
+	FuncStore searchFunc(string name) {
+		for(int i = 0; i<findex; i++) {
+			if(name==Functable[i].name && Functable[i].codeline!=-1) {
+				return Functable[i];
+			}
+		}
+		return error;
+	}
+};
+FuncTable functable;
 

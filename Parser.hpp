@@ -6,6 +6,7 @@ private:
 	Lexer lexer;
 	Token token;
 public:
+	int returnnumber = 0;
 	
 	int compile(string input) {
 		setsource(input);
@@ -55,7 +56,6 @@ public:
 							error();
 							return;
 					}
-					
 				case Declstring:
 					token = lexer.GetToken();
 					token = lexer.checkGet(token, Ident);
@@ -63,6 +63,25 @@ public:
 					expression();
 					token = lexer.checkGet(token, Semi);
 					return;
+				case Func:
+					token = lexer.GetToken();
+					functable.newFunc(cIndex, token.showtext());
+					token = lexer.checkGet(token, Ident);
+					if(token.showtk()==Eq) {
+						backpatchindex = cIndex;
+						genCode(cal, 0, nothing);
+						functable.Functable[functable.findex-1].codeline = cIndex;
+						token = lexer.checkGet(token, Eq);
+						token = lexer.checkGet(token, LMPar);
+						returnnumber = Calcstacktop;
+						while(token.showtk()!=RMPar) {
+							statement();
+						}
+						code[backpatchindex].val = cIndex;
+						token = lexer.checkGet(token, RMPar);
+						Calcstacktop = returnnumber;
+					}
+					break;
 				default:
 					error();
 					return;
@@ -84,7 +103,7 @@ public:
 					statement();
 				}
 				token = lexer.checkGet(token, RMPar);
-				genCode(top, lasttop, nothing);
+				genCode(top, lasttop-1, nothing);
 				genCode(mov, cntindex, nothing);
 				genCode(psh, 1, nothing);
 				genCode(opr, 0, sub);
@@ -92,9 +111,29 @@ public:
 			}
 			else {
 				token = lexer.checkGet(token, Colon);
+				int doline = cIndex;
+				vartable.newVar("cnt");
+				int cntindex = vartable.tIndex-1;
+				int lasttop = Calcstacktop;
+				genCode(def, cntindex, nothing);
 				condition();
-				if(lexer.peek()==RPar) {
+				genCode(opr, 0, inv);
+				if(token.showtk()==RPar) {
+					token = lexer.GetToken();
+					backpatchindex = cIndex;
+					genCode(jmp, 0, nothing);
+					token = lexer.checkGet(token, LMPar);
+					while(token.showtk()!=RMPar) {
+						statement();
+					}
+					token = lexer.checkGet(token, RMPar);
 					
+					genCode(top, lasttop-1, nothing);
+					genCode(mov, cntindex, nothing);
+					genCode(psh, 1, nothing);
+					genCode(opr, 0, sub);
+					genCode(jmp, doline, nothing);
+					code[backpatchindex].val = cIndex;
 				}
 				else {
 					token = lexer.checkGet(token, Colon);
@@ -102,6 +141,14 @@ public:
 				}
 			}
 			break;
+		case Return:
+			token = lexer.checkGet(token, Return);
+			expression();
+			genCode(swp, -(Calcstacktop-returnnumber)+1, nothing);
+			genCode(ttp, -(Calcstacktop - returnnumber), nothing);
+			genCode(ret, 0, nothing);
+			token = lexer.checkGet(token, Semi);
+			return;
 //			condition();
 //		case If:
 //			token = lexer.GetToken();
@@ -136,6 +183,16 @@ public:
 			return;
 		case Ident:
 			identname = token.showtext();
+			if(functable.searchFunc(identname).codeline!=-1) {
+				token = lexer.checkGet(token, Ident);
+				token = lexer.checkGet(token, Semi);
+				genCode(psh, cIndex+2, nothing);
+				genCode(cal, functable.searchFunc(identname).codeline, nothing);
+				genCode(ttp, 1, nothing);
+				genCode(swp, -1, nothing);
+				genCode(ttp, -1, nothing);
+				return;
+			}
 			token = lexer.GetToken();
 			oprtoken = token.showtk();
 			switch(token.showtk()) {
@@ -187,10 +244,10 @@ public:
 	
 	void expression() {
 		Tokenkind k;
-		k = token.showtk();
-		if(k==Plus || k==Minus) {
-			token = lexer.GetToken();
-		}
+//		k = token.showtk();
+//		if(k==Plus || k==Minus) {
+//			token = lexer.GetToken();
+//		}
 		term();
 		k = token.showtk();
 		while(k==Plus || k==Minus) {
@@ -235,10 +292,15 @@ public:
 			token = lexer.GetToken();
 			i%=2;
 		}
-		if(i==1) {
-			genCode(opr, 0, neg);
-		}
+		
 		if(token.showtk()==Ident) {
+			string name = token.showtext();
+			while(lexer.peek()=='.') {
+				token = lexer.checkGet(token, Point);
+				name = name + ".";
+				token = lexer.GetToken();
+				name = name + token.showtext();
+			}
 			genCode(mov, vartable.search(token.showtext()).addr, nothing);
 			token = lexer.GetToken();
 		}
@@ -253,6 +315,9 @@ public:
 		}
 		else if(token.showtk()==String) {
 			token = lexer.GetToken();
+		}
+		if(i==1) {
+			genCode(opr, 0, neg);
 		}
 		switch(token.showtk()) {
 			case Ident: case Number: case LPar: error();

@@ -13,9 +13,9 @@ enum Tokenkind {
     Number, Ident, String, Bool,
 	Pleq, Mieq, Tieq, Diveq, Remeq,
 	Do, Def, Cnt,
-	Num, Declint, Declfloat, Declstring,
+	Num, Declint, Declfloat, Declstring, Func,
 	Semi, Colon, LPar, RPar, LMPar, RMPar, Point,
-	Print, Input
+	Print, Input, Return
 };
 
 struct keyWord {
@@ -24,7 +24,8 @@ struct keyWord {
 };
 
 vector<keyWord> KeyWdT = {
-	{"do", Do}, {"def", Def}, {"num", Num}, {"int", Declint}, {"float", Declfloat}, {"str", Declstring}, {"print", Print}, {"input", Input}
+	{"do", Do}, {"def", Def}, {"num", Num}, {"int", Declint}, {"float", Declfloat}, {"str", Declstring}, {"func", Func}, {"output", Print}, {"input", Input},
+	{"return", Return}
 };
 
 bool isNum(char c) {
