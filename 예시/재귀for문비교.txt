@@ -1,0 +1,58 @@
+def func a(num.int b, num.int c) {
+if(b<c) {
+return 0;
+}
+do(100) { }
+return a(b-c,c)+1;
+}
+output(a(100,7));
+
+<발전>
+code
+  0: cod gto 30
+  1: mem mov -2
+  2: mem mov -1
+  3: opr grt
+  4: cod jmp 8
+  5: mem psh 0
+  6: scp dls
+  7: scp gts
+scp nsc
+mem psh 100
+mem def
+mem psh 0
+mem def
+mem mov -1
+mem mov -2
+opr lsq
+cod jmp
+mem mov -1
+mem psh 1
+opr add
+mem asg -1
+cod gto
+scp dls
+scp dsc
+ 16: scp nsc
+ 17: mem mov -3
+ 18: mem mov -2
+ 19: opr sub
+ 20: mem def
+ 21: mem mov -3
+ 22: mem def
+ 23: cod cal 1
+ 24: scp dls
+ 25: scp dsc
+ 26: mem psh 1
+ 27: opr add
+ 28: scp dls
+ 29: scp gts
+ 30: scp nsc
+ 31: mem psh 14
+ 32: mem def
+ 33: mem psh 7
+ 34: mem def
+ 35: cod cal 1
+ 36: scp dls
+ 37: scp dsc
+ 38: opr prt

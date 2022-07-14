@@ -7,7 +7,8 @@ private:
 	Token token;
 public:
 	int returnnumber = 0;
-	
+	int recursionVartableStart[1000] = {0,};
+	int recVarIndex = -1;
 	int compile(string input) {
 		setsource(input);
 		// printf("start compilation\n");
@@ -18,6 +19,10 @@ public:
 		while(token.showtk()!=Eof) {
 			statement();
 		}
+	}
+	
+	void DeclInt() {
+		
 	}
 	
 	void setsource(string input) {
@@ -93,6 +98,66 @@ public:
 						token = lexer.checkGet(token, RMPar);
 						Calcstacktop = returnnumber;
 					}
+					else if(token.showtk()==LPar) {
+						token = lexer.checkGet(token, LPar);
+						recVarIndex++;
+						recursionVartableStart[recVarIndex] = vartable.addr;
+						backpatchindex = cIndex;
+						genCode(cal, 0, nothing);
+						functable.Functable[functable.findex-1].codeline = cIndex;
+						while(token.showtk()!=RPar) {
+							switch(token.showtk()) {
+								case Num:
+									token = lexer.GetToken();
+									token = lexer.checkGet(token, Point);
+									switch(token.showtk()) {
+										case Declint:
+											token = lexer.GetToken();
+											functable.newParam(token.showtext());
+//											vartable.newVar(token.showtext(), 1); this should be on function call
+											token = lexer.checkGet(token, Ident);
+											if(token.showtk()!=RPar) token = lexer.checkGet(token, Comma);
+											break;
+										default:
+											error();
+											break;
+									}
+								case Declarr:
+									token = lexer.checkGet(token, Declarr);
+									token = lexer.checkGet(token, LBPar);
+									if(token.showtk()==Number) {
+										int arrlen = token.tokenvalue;
+										token = lexer.checkGet(token, Number);
+										token = lexer.checkGet(token, RBPar);
+//										vartable.newVar(token.showtext(), arrlen); this should be on function call
+										functable.newParam(token.showtext());
+										token = lexer.checkGet(token, Ident);
+										if(token.showtk()!=RPar) token = lexer.checkGet(token, Comma);
+									}
+									break;
+								case Declstring:
+									token = lexer.GetToken();
+									token = lexer.checkGet(token, Ident);
+//									vartable.newVar(token.showtext(), 1); this should be on function call
+									functable.newParam(token.showtext());
+									if(token.showtk()!=RPar) token = lexer.checkGet(token, Comma);
+									break;
+								default:
+									break;
+							}
+						}
+						token = lexer.checkGet(token, RPar);
+						token = lexer.checkGet(token, Eq);
+						token = lexer.checkGet(token, LMPar);
+						returnnumber = Calcstacktop;
+						while(token.showtk()!=RMPar) {
+							statement();
+						}
+						code[backpatchindex].val = cIndex;
+						token = lexer.checkGet(token, RMPar);
+						Calcstacktop = returnnumber;
+					}
+					token = lexer.checkGet(token, Semi);
 					break;
 				default:
 					error();
@@ -314,10 +379,6 @@ public:
 	
 	void expression() {
 		Tokenkind k;
-//		k = token.showtk();
-//		if(k==Plus || k==Minus) {
-//			token = lexer.GetToken();
-//		}
 		term();
 		k = token.showtk();
 		while(k==Plus || k==Minus) {
@@ -339,7 +400,6 @@ public:
 		factor();
 		k = token.showtk();
 		while(k==Times || k==Div) {
-//			cout<<token.showtext()<<"!!";
 			token = lexer.GetToken();
 			factor();
 			if(k==Times) {

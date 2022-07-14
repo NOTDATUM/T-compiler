@@ -1,0 +1,44 @@
+do(5) {
+output(1);
+}
+
+<기존>
+code
+  0: mem psh 5
+  1: mem def
+  2: mem psh 0
+  3: mem def
+  4: mem mov 0
+  5: mem mov 1
+  6: opr lss
+  7: cod jmp 15
+  8: mem psh 1
+  9: opr prt
+ 10: mem mov 1
+ 11: mem psh 1
+ 12: opr add
+ 13: mem asg 1
+ 14: cod gto 4
+
+<발전>
+code
+  0: mem psh 5
+  1: mem def
+  2: mem psh 0
+  3: mem def
+  4: mem mov 0
+  5: mem mov 1
+  6: opr lss
+  7: cod jmp 18
+  8: scp nsc
+  9: mem psh 1
+ 10: opr prt
+ 11: scp dls
+ 12: scp dsc
+ 13: mem mov 1
+ 14: mem psh 1
+ 15: opr add
+ 16: mem asg 1
+ 17: cod gto 4
+
+

@@ -14,7 +14,7 @@ enum Tokenkind {
 	Pleq, Mieq, Tieq, Diveq, Remeq,
 	Do, Def, Cnt,
 	Num, Declint, Declfloat, Declstring, Declarr, Func,
-	Semi, Colon, LPar, RPar, LMPar, RMPar, LBPar, RBPar, Point,
+	Semi, Colon, LPar, RPar, LMPar, RMPar, LBPar, RBPar, Point, Comma,
 	Print, Input, Return
 };
 
@@ -238,6 +238,9 @@ public:
 		}
         else if(curChar=='.') {
         	token.init(Point, string(1, curChar));
+		}
+		else if(curChar==',') {
+			token.init(Comma, string(1, curChar));
 		}
         else if(isNum(curChar)) {
             string result = string(1, curChar);

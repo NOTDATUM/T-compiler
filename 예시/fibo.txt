@@ -1,0 +1,38 @@
+(scp) fibo<a> = {
+  if(a<=1) stop(1);
+  fibo<a-1>+fibo<a-2>
+}
+output(fibo<35>);
+
+cod gto 
+mem mov -1
+mem psh 1
+opr lsq
+cod jmp 
+mem psh 1
+scp dls
+scp gts
+scp nsc
+mem mov -1
+mem psh 1
+opr sub 
+mem def
+cod cal
+scp dls
+scp dsc
+scp nsc
+mem mov -1
+mem psh 2
+opr sub
+mem def
+cod cal
+scp dls
+scp dsc
+opr add
+scp nsc
+mem psh 35
+mem def
+cod cal
+scp dls
+scp dsc
+opr prt

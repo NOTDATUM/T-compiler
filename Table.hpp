@@ -45,6 +45,8 @@ class FuncStore {
 public:
 	string name;
 	int codeline;
+	string param[1000];
+	int numparam = 0;
 };
 
 class FuncTable {
@@ -52,13 +54,19 @@ public:
 	FuncStore Functable[1000];
 	int findex = 0;
 	int addr = 0;
-	FuncStore error = {"", -1};
+	FuncStore error;
 	void newFunc(int codeline, string name) {
 		Functable[findex].codeline = codeline;
 		Functable[findex++].name = name;
 	}
 	
+	void newParam(string paramname) {
+		Functable[findex].param[Functable[findex].numparam] = paramname;
+		Functable[findex].numparam++;
+	}
+	
 	FuncStore searchFunc(string name) {
+		error.codeline = -1;
 		for(int i = 0; i<findex; i++) {
 			if(name==Functable[i].name && Functable[i].codeline!=-1) {
 				return Functable[i];
